@@ -1,0 +1,1 @@
+I just started developing this as an original project. The purpose is to understand pulliing from API's, building my own API's, parsing Jsons, and other features as I move on. Basically this is hopefully my escape from tutorial hell. I will make this readme better as I make more progress in the API development.
