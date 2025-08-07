@@ -38,5 +38,9 @@ func main() {
 	var events []QuakeSummary
 	err = json.Unmarshal([]byte(body), &events)
 
-	fmt.Printf("%+v", events)
+	for i, e := range events {
+		fmt.Printf("#%v) ID: %v, Location: %v, Magnitude: %v\n", i, e.ID, e.EnLocation, e.Magnitude)
+	}
+
+	// fmt.Printf("%+v", events)
 }
