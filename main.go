@@ -38,18 +38,36 @@ func parseQuakeData(data []byte) ([]QuakeSummary, error) {
 }
 
 func main() {
+	http.HandleFunc("/earthquakes", func(rw http.ResponseWriter, r *http.Request) {
+		// rw.Header().Set("Content-Type", "application/json") use this if we want to output to the server in json
+		rw.Header().Set("Content-Type", "text/plain")
 
-	data, err := fetchQuakeData()
-	if err != nil {
+		data, err := fetchQuakeData()
+		if err != nil {
+			rw.WriteHeader(http.StatusInternalServerError)
+			log.Printf("Error fetching data: %v", err)
+			return
+		}
+
+		events, err := parseQuakeData(data)
+		if err != nil {
+			rw.WriteHeader(http.StatusInternalServerError)
+			log.Printf("Error parsing data: %v", err)
+			return
+		}
+
+		limit := 10
+		for i, e := range events {
+			if i >= limit {
+				break
+			}
+			fmt.Fprintf(rw, "#%v) ID: %v, Location: %v, Magnitude: %v\n", i, e.ID, e.EnLocation, e.Magnitude)
+		}
+	})
+
+	log.Println("Server starting on :8080")
+	if err := http.ListenAndServe(":8080", nil); err != nil {
 		log.Fatal(err)
 	}
 
-	events, err := parseQuakeData(data)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	for i, e := range events {
-		fmt.Printf("#%v) ID: %v, Location: %v, Magnitude: %v\n", i, e.ID, e.EnLocation, e.Magnitude)
-	}
 }
