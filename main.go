@@ -17,30 +17,39 @@ type QuakeSummary struct {
 	Magnitude  string `json:"mag"`
 }
 
-func main() {
-	fmt.Println("Hello, Jishin API!")
-
+func fetchQuakeData() ([]byte, error) {
 	res, err := http.Get(JMAQuakeURL)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer res.Body.Close()
+
 	body, err := io.ReadAll(res.Body)
 	if res.StatusCode > 400 {
-		log.Fatalf("Response failed with status code: %d and \nbody: %s\n", res.StatusCode, body)
+		return nil, fmt.Errorf("Response failed with status code: %d", res.StatusCode)
 	}
+	return body, err
+}
+
+func parseQuakeData(data []byte) ([]QuakeSummary, error) {
+	var events []QuakeSummary
+	err := json.Unmarshal(data, &events)
+	return events, err
+}
+
+func main() {
+
+	data, err := fetchQuakeData()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// Unmarshall body into events slice of QuakeSummary structs
-
-	var events []QuakeSummary
-	err = json.Unmarshal([]byte(body), &events)
+	events, err := parseQuakeData(data)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	for i, e := range events {
 		fmt.Printf("#%v) ID: %v, Location: %v, Magnitude: %v\n", i, e.ID, e.EnLocation, e.Magnitude)
 	}
-
-	// fmt.Printf("%+v", events)
 }
