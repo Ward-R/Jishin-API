@@ -1,11 +1,17 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
+
+	"jishin-api/db"
+
+	"github.com/jackc/pgx/v4"
+	"github.com/joho/godotenv"
 )
 
 const JMAQuakeURL = "https://www.jma.go.jp/bosai/quake/data/list.json"
@@ -15,6 +21,21 @@ type QuakeSummary struct {
 	ID         string `json:"eid"`
 	EnLocation string `json:"en_anm"`
 	Magnitude  string `json:"mag"`
+}
+
+func dbConnect() (*pgx.Conn, error) {
+	// Load environment variables from .env file.
+	err := godotenv.Load()
+	if err != nil {
+		return nil, fmt.Errorf("error loading .env file: %w", err)
+	}
+
+	conn, err := db.Connect()
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to database: %w", err)
+	}
+
+	return conn, nil
 }
 
 func fetchQuakeData() ([]byte, error) {
@@ -38,6 +59,15 @@ func parseQuakeData(data []byte) ([]QuakeSummary, error) {
 }
 
 func main() {
+	log.Println("Starting Jishin API...")
+
+	conn, err := dbConnect()
+	if err != nil {
+		log.Fatalf("Application startup failed: %v", err)
+	}
+	defer conn.Close(context.Background())
+	fmt.Println("Successfully connected to the database!")
+
 	http.HandleFunc("/earthquakes", func(rw http.ResponseWriter, r *http.Request) {
 		// rw.Header().Set("Content-Type", "application/json") use this if we want to output to the server in json
 		rw.Header().Set("Content-Type", "text/plain")
