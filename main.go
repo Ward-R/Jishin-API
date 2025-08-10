@@ -16,11 +16,53 @@ import (
 
 const JMAQuakeURL = "https://www.jma.go.jp/bosai/quake/data/list.json"
 
+// type Earthquake struct { // final complete struct for reference from db file
+// 	ReportId     string
+// 	OriginTime   time.Time
+// 	ArrivalTime  time.Time
+// 	Latitude     float64
+// 	Longitude    float64
+// 	DepthKm      int
+// 	Magnitude    float64
+// 	MaxIntensity float64
+// 	JpLocation   string
+// 	EnLocation   string
+// 	TsunamiRisk  string
+// }
+
+// The JMA has two json files. A list of each earthquake summary and inside
+// a secondary json link to a detail json of the specific earthquake.
+// We need to have intermediary stucts to hold this data as we parse it.
+
+// This holds the data from the list of earthquakes.
 type QuakeSummary struct {
-	// can add more from the JMA JSON, just putting a couple to get it working for now.
 	ID         string `json:"eid"`
 	EnLocation string `json:"en_anm"`
 	Magnitude  string `json:"mag"`
+	DetailJSON string `json:"json"`
+}
+
+// The following structs are the details of one json via DetailJSON:
+type EarthquakeBody struct {
+	Earthquake JsonEarthquake `json:"Earthquake"`
+	Comments   JsonComments   `json:"Comments"`
+}
+
+type JsonEarthquake struct {
+	OriginTime  string `json:OriginTime"`
+	ArrivalTime string `json:ArrivalTime`
+	Hypocenter  struct {
+		Coordinate string `json:"Coordinate"`
+		EnName     string `json:"enName"`
+	} `json:"Hypocenter"`
+	Magnitude string `json:"Magnitude"`
+}
+
+type JsonComments struct {
+	ForecastComment struct {
+		JpComment string `json:"Text"`
+		EnComment string `json:"enText"`
+	} `json:"ForecastComment"`
 }
 
 func dbConnect() (*pgx.Conn, error) {
