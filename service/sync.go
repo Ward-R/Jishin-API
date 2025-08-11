@@ -4,13 +4,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/Ward-R/Jishin-API/db"
 	"github.com/Ward-R/Jishin-API/types"
+	"github.com/jackc/pgx/v4"
 )
 
 const (
@@ -145,6 +148,49 @@ func ParseDetailQuakeData(id string, data []byte) (*types.Earthquake, error) {
 	return quake, nil
 }
 
-// func SyncEarthQuakes(conn *pgx.Conn) (recordsAdded int, error){
+// function syncs database with JMA earthquake data when called. If it exists,
+// in the db already it skips adding it based on recordID.
+func SyncEarthQuakes(conn *pgx.Conn) (int, error) {
+	data, err := FetchQuakeData()
+	recordsAdded := 0
+	if err != nil {
+		return 0, fmt.Errorf("error fetching summary data: %w", err)
+	}
 
-// }
+	events, err := ParseQuakeData(data)
+	if err != nil {
+		return 0, fmt.Errorf("error parsing summary data: %w", err)
+	}
+
+	for _, event := range events {
+		detailData, err := FetchDetailQuakeData(event.DetailJSON)
+		if err != nil {
+			log.Printf("Error fetching detailed data for ID %s: %v", event.ID, err)
+			continue
+		}
+
+		earthquake, err := ParseDetailQuakeData(event.ID, detailData)
+		if err != nil {
+			log.Printf("Error parsing data for ID %s: %v", event.ID, err)
+			continue
+		}
+
+		// Check if earthquake already exists
+		exists, err := db.EarthquakeExists(conn, earthquake.ReportId)
+		if err != nil {
+			// Log error but continue with next earthquake
+			continue
+		}
+
+		if !exists {
+			// Insert new earthquake
+			err = db.InsertEarthquake(conn, earthquake)
+			if err != nil {
+				// Log error but continue
+				continue
+			}
+			recordsAdded++ // Increment counter
+		}
+	}
+	return recordsAdded, nil
+}

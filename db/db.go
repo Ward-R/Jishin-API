@@ -9,6 +9,9 @@ import (
 	"github.com/jackc/pgx/v4"
 )
 
+// Note to self. to login via terminal
+// psql -U admin -d jishin_db -h localhost
+
 // Connect establishes a connection to the PostgreSQL database.
 func Connect() (*pgx.Conn, error) {
 	connStr := os.Getenv("DATABASE_URL")
