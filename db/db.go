@@ -68,3 +68,40 @@ func InsertEarthquake(conn *pgx.Conn, quake *types.Earthquake) error {
 	}
 	return nil
 }
+
+func GetEarthquakes(conn *pgx.Conn) ([]types.Earthquake, error) {
+	query := `
+			SELECT report_id, origin_time, arrival_time, magnitude, depth_km,
+      	latitude, longitude, max_intensity, jp_location, en_location,
+      	jp_comment, en_comment, tsunami_risk
+			FROM earthquakes
+      ORDER BY origin_time
+			DESC LIMIT 50`
+
+	// Execute the query
+	rows, err := conn.Query(context.Background(), query)
+	if err != nil {
+		return nil, fmt.Errorf("error getting earthquakes: %w", err)
+	}
+	defer rows.Close()
+
+	// Create slice to hold the results
+	var earthquakes []types.Earthquake
+
+	// Loop through rows and scan into structs
+	for rows.Next() {
+		var eq types.Earthquake
+		err := rows.Scan(
+			&eq.ReportId, &eq.OriginTime, &eq.ArrivalTime, &eq.Magnitude,
+			&eq.DepthKm, &eq.Latitude, &eq.Longitude, &eq.MaxIntensity,
+			&eq.JpLocation, &eq.EnLocation, &eq.JpComment, &eq.EnComment,
+			&eq.TsunamiRisk,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning row: %w", err)
+		}
+		earthquakes = append(earthquakes, eq)
+	}
+
+	return earthquakes, nil
+}

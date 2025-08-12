@@ -150,7 +150,7 @@ func ParseDetailQuakeData(id string, data []byte) (*types.Earthquake, error) {
 
 // function syncs database with JMA earthquake data when called. If it exists,
 // in the db already it skips adding it based on recordID.
-func SyncEarthQuakes(conn *pgx.Conn) (int, error) {
+func SyncEarthquakes(conn *pgx.Conn) (int, error) {
 	data, err := FetchQuakeData()
 	recordsAdded := 0
 	if err != nil {
