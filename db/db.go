@@ -3,8 +3,10 @@ package db
 import (
 	"context"
 	"fmt"
+	"math"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/Ward-R/Jishin-API/types"
 	"github.com/jackc/pgx/v4"
@@ -201,4 +203,52 @@ func GetRecentEarthquakes(conn *pgx.Conn) ([]types.Earthquake, error) {
 	}
 
 	return earthquakes, nil
+}
+
+func GetEarthquakeStats(conn *pgx.Conn) (map[string]interface{}, error) {
+	// Get total count, average magnitude, strongest earthquake
+	query := `
+          SELECT
+              COUNT(*) as total_count,
+              AVG(magnitude) as avg_magnitude,
+              MAX(magnitude) as max_magnitude,
+              MIN(magnitude) as min_magnitude,
+              MAX(origin_time) as latest_earthquake
+          FROM earthquakes`
+
+	var totalCount int
+	var avgMagnitude, maxMagnitude, minMagnitude float64
+	var latestTime time.Time
+
+	err := conn.QueryRow(context.Background(), query).Scan(
+		&totalCount, &avgMagnitude, &maxMagnitude, &minMagnitude, &latestTime,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("error querying stats: %w", err)
+	}
+
+	// Get count for last 24 hours
+	recentQuery := `
+          SELECT COUNT(*)
+          FROM earthquakes
+          WHERE origin_time >= NOW() - INTERVAL '24 hours'`
+
+	var recentCount int
+	err = conn.QueryRow(context.Background(), recentQuery).Scan(&recentCount)
+	if err != nil {
+		return nil, fmt.Errorf("error querying recent stats: %w", err)
+	}
+
+	stats := map[string]interface{}{
+		"total_earthquakes":   totalCount,
+		"average_magnitude":   math.Round(avgMagnitude*100) / 100, // Round to 2 decimals
+		"strongest_magnitude": maxMagnitude,
+		"weakest_magnitude":   minMagnitude,
+		"latest_earthquake":   latestTime.Format(time.RFC3339),
+		"last_24_hours":       recentCount,
+		"data_source":         "Japan Meteorological Agency (JMA)",
+		"last_updated":        time.Now().Format(time.RFC3339),
+	}
+
+	return stats, nil
 }

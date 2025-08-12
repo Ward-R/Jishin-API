@@ -107,6 +107,7 @@ func RootHandler(w http.ResponseWriter, r *http.Request) {
 			"GET /health":                      "Health check",
 			"GET /earthquakes":                 "Default 50 earthquakes",
 			"GET /earthquakes/recent":          "Gets all earthquakes in last 24 hours",
+			"GET /earthquakes/stats":           "Summary statistics and data overview",
 			"GET /earthquakes?limit=10":        "10 earthquakes",
 			"GET /earthquakes?limit=-1":        "ALL earthquakes",
 			"GET /earthquakes?magnitude=5.0":   "Earthquakes 5.0+ magnitude",
@@ -176,5 +177,18 @@ func GetRecentEarthquakesHandler(conn *pgx.Conn) http.HandlerFunc {
 			"earthquakes": earthquakes,
 		}
 		json.NewEncoder(w).Encode(response)
+	}
+}
+
+func GetEarthquakeStatsHandler(conn *pgx.Conn) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		stats, err := db.GetEarthquakeStats(conn)
+		if err != nil {
+			http.Error(w, "Error fetching earthquake statistics", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(stats)
 	}
 }
