@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/Ward-R/Jishin-API/types"
 	"github.com/jackc/pgx/v4"
@@ -69,26 +70,122 @@ func InsertEarthquake(conn *pgx.Conn, quake *types.Earthquake) error {
 	return nil
 }
 
-func GetEarthquakes(conn *pgx.Conn) ([]types.Earthquake, error) {
+func GetEarthquakes(conn *pgx.Conn, limit int, magnitude float64, date string) ([]types.Earthquake, error) {
+	// defaults:
+	// earthquakes returned. if -1 all will be returned.
+	if limit == 0 {
+		limit = 50 // Default when no param provided
+	}
+	// if limit == -1, skip Limit clause entirely
+	// if limit >1 then us as-is
+
+	// build base query
 	query := `
 			SELECT report_id, origin_time, arrival_time, magnitude, depth_km,
       	latitude, longitude, max_intensity, jp_location, en_location,
       	jp_comment, en_comment, tsunami_risk
-			FROM earthquakes
-      ORDER BY origin_time
-			DESC LIMIT 50`
+			FROM earthquakes`
 
-	// Execute the query
-	rows, err := conn.Query(context.Background(), query)
+	var args []interface{}
+	var conditions []string
+	argCount := 0
+
+	// Add magnitude filter if specified
+	if magnitude > 0 {
+		argCount++
+		conditions = append(conditions, fmt.Sprintf("magnitude >= $%d", argCount))
+		args = append(args, magnitude)
+	}
+
+	// Add date filter if specified
+	if date != "" {
+		argCount++
+		conditions = append(conditions, fmt.Sprintf("DATE(origin_time) = $%d", argCount))
+		args = append(args, date)
+	}
+
+	// Add WHERE clause if we have conditions
+	if len(conditions) > 0 {
+		query += " WHERE " + strings.Join(conditions, " AND ")
+	}
+
+	// Add ORDER BY and LIMIT (only if not requesting all)
+	query += " ORDER BY origin_time DESC"
+	if limit != -1 {
+		argCount++
+		query += fmt.Sprintf(" LIMIT $%d", argCount)
+		args = append(args, limit)
+	}
+
+	// Execute query
+	rows, err := conn.Query(context.Background(), query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("error getting earthquakes: %w", err)
+		return nil, fmt.Errorf("error querying earthquakes: %w", err)
 	}
 	defer rows.Close()
 
 	// Create slice to hold the results
 	var earthquakes []types.Earthquake
-
 	// Loop through rows and scan into structs
+	for rows.Next() {
+		var eq types.Earthquake
+		err := rows.Scan(
+			&eq.ReportId, &eq.OriginTime, &eq.ArrivalTime, &eq.Magnitude,
+			&eq.DepthKm, &eq.Latitude, &eq.Longitude, &eq.MaxIntensity,
+			&eq.JpLocation, &eq.EnLocation, &eq.JpComment, &eq.EnComment,
+			&eq.TsunamiRisk,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning row: %w", err)
+		}
+		earthquakes = append(earthquakes, eq)
+	}
+
+	return earthquakes, nil
+}
+
+func GetEarthquakeById(conn *pgx.Conn, id string) (*types.Earthquake, error) {
+
+	query := `
+			SELECT report_id, origin_time, arrival_time, magnitude, depth_km,
+      	latitude, longitude, max_intensity, jp_location, en_location,
+      	jp_comment, en_comment, tsunami_risk
+			FROM earthquakes
+			WHERE report_id = $1`
+
+	// Execute the query
+	row := conn.QueryRow(context.Background(), query, id)
+
+	var eq types.Earthquake
+	err := row.Scan(
+		&eq.ReportId, &eq.OriginTime, &eq.ArrivalTime, &eq.Magnitude,
+		&eq.DepthKm, &eq.Latitude, &eq.Longitude, &eq.MaxIntensity,
+		&eq.JpLocation, &eq.EnLocation, &eq.JpComment, &eq.EnComment,
+		&eq.TsunamiRisk,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("earthquake with id %s not found: %w", id, err)
+	}
+
+	return &eq, nil
+}
+
+func GetRecentEarthquakes(conn *pgx.Conn) ([]types.Earthquake, error) {
+	query := `
+          SELECT report_id, origin_time, arrival_time, magnitude, depth_km,
+                 latitude, longitude, max_intensity, jp_location, en_location,
+                 jp_comment, en_comment, tsunami_risk
+          FROM earthquakes
+          WHERE origin_time >= NOW() - INTERVAL '24 hours'
+          ORDER BY origin_time DESC`
+
+	rows, err := conn.Query(context.Background(), query)
+	if err != nil {
+		return nil, fmt.Errorf("error querying recent earthquakes: %w", err)
+	}
+	defer rows.Close()
+
+	var earthquakes []types.Earthquake
 	for rows.Next() {
 		var eq types.Earthquake
 		err := rows.Scan(

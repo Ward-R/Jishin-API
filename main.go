@@ -51,7 +51,10 @@ func main() {
 
 	// Routes
 	http.HandleFunc("/", api.RootHandler)
+	http.HandleFunc("/health", api.HealthHandler(conn))
 	http.HandleFunc("/earthquakes", api.GetEarthquakesHandler(conn))
+	http.HandleFunc("/earthquake/", api.GetEarthquakeByIdHandler(conn))
+	http.HandleFunc("/earthquakes/recent", api.GetRecentEarthquakesHandler(conn))
 	http.HandleFunc("/sync", api.SyncEarthquakesHandler(conn))
 
 	// Start localhost
