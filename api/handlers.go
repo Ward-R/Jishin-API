@@ -36,7 +36,12 @@ func HandleEarthquakes(dbConn *pgx.Conn, request events.APIGatewayProxyRequest) 
 	if err != nil {
 		return events.APIGatewayProxyResponse{
 			StatusCode: 500,
-			Headers:    map[string]string{"Content-Type": "application/json"},
+			Headers: map[string]string{
+			"Content-Type":                "application/json",
+			"Access-Control-Allow-Origin": "*",
+			"Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+			"Access-Control-Allow-Headers": "Content-Type",
+		},
 			Body:       `{"error": "Error fetching earthquakes"}`,
 		}, nil
 	}
@@ -45,8 +50,13 @@ func HandleEarthquakes(dbConn *pgx.Conn, request events.APIGatewayProxyRequest) 
 	body, _ := json.Marshal(earthquakes)
 	return events.APIGatewayProxyResponse{
 		StatusCode: 200,
-		Headers:    map[string]string{"Content-Type": "application/json"},
-		Body:       string(body),
+		Headers: map[string]string{
+			"Content-Type":                "application/json",
+			"Access-Control-Allow-Origin": "*",
+			"Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+			"Access-Control-Allow-Headers": "Content-Type",
+		},
+		Body: string(body),
 	}, nil
 }
 
@@ -77,8 +87,13 @@ func HandleRoot(dbConn *pgx.Conn) (events.APIGatewayProxyResponse, error) {
 	body, _ := json.Marshal(response)
 	return events.APIGatewayProxyResponse{
 		StatusCode: 200,
-		Headers:    map[string]string{"Content-Type": "application/json"},
-		Body:       string(body),
+		Headers: map[string]string{
+			"Content-Type":                "application/json",
+			"Access-Control-Allow-Origin": "*",
+			"Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+			"Access-Control-Allow-Headers": "Content-Type",
+		},
+		Body: string(body),
 	}, nil
 }
 
@@ -94,7 +109,12 @@ func HandleHealth(dbConn *pgx.Conn) (events.APIGatewayProxyResponse, error) {
 		body, _ := json.Marshal(response)
 		return events.APIGatewayProxyResponse{
 			StatusCode: 503,
-			Headers:    map[string]string{"Content-Type": "application/json"},
+			Headers: map[string]string{
+			"Content-Type":                "application/json",
+			"Access-Control-Allow-Origin": "*",
+			"Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+			"Access-Control-Allow-Headers": "Content-Type",
+		},
 			Body:       string(body),
 		}, nil
 	}
@@ -108,8 +128,13 @@ func HandleHealth(dbConn *pgx.Conn) (events.APIGatewayProxyResponse, error) {
 	body, _ := json.Marshal(response)
 	return events.APIGatewayProxyResponse{
 		StatusCode: 200,
-		Headers:    map[string]string{"Content-Type": "application/json"},
-		Body:       string(body),
+		Headers: map[string]string{
+			"Content-Type":                "application/json",
+			"Access-Control-Allow-Origin": "*",
+			"Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+			"Access-Control-Allow-Headers": "Content-Type",
+		},
+		Body: string(body),
 	}, nil
 }
 
@@ -118,7 +143,12 @@ func HandleRecent(dbConn *pgx.Conn) (events.APIGatewayProxyResponse, error) {
 	if err != nil {
 		return events.APIGatewayProxyResponse{
 			StatusCode: 500,
-			Headers:    map[string]string{"Content-Type": "application/json"},
+			Headers: map[string]string{
+			"Content-Type":                "application/json",
+			"Access-Control-Allow-Origin": "*",
+			"Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+			"Access-Control-Allow-Headers": "Content-Type",
+		},
 			Body:       `{"error": "Error fetching recent earthquakes"}`,
 		}, nil
 	}
@@ -133,7 +163,12 @@ func HandleRecent(dbConn *pgx.Conn) (events.APIGatewayProxyResponse, error) {
 		body, _ := json.Marshal(response)
 		return events.APIGatewayProxyResponse{
 			StatusCode: 200,
-			Headers:    map[string]string{"Content-Type": "application/json"},
+			Headers: map[string]string{
+			"Content-Type":                "application/json",
+			"Access-Control-Allow-Origin": "*",
+			"Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+			"Access-Control-Allow-Headers": "Content-Type",
+		},
 			Body:       string(body),
 		}, nil
 	}
@@ -147,8 +182,13 @@ func HandleRecent(dbConn *pgx.Conn) (events.APIGatewayProxyResponse, error) {
 	body, _ := json.Marshal(response)
 	return events.APIGatewayProxyResponse{
 		StatusCode: 200,
-		Headers:    map[string]string{"Content-Type": "application/json"},
-		Body:       string(body),
+		Headers: map[string]string{
+			"Content-Type":                "application/json",
+			"Access-Control-Allow-Origin": "*",
+			"Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+			"Access-Control-Allow-Headers": "Content-Type",
+		},
+		Body: string(body),
 	}, nil
 }
 
@@ -157,7 +197,12 @@ func HandleStats(dbConn *pgx.Conn) (events.APIGatewayProxyResponse, error) {
 	if err != nil {
 		return events.APIGatewayProxyResponse{
 			StatusCode: 500,
-			Headers:    map[string]string{"Content-Type": "application/json"},
+			Headers: map[string]string{
+			"Content-Type":                "application/json",
+			"Access-Control-Allow-Origin": "*",
+			"Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+			"Access-Control-Allow-Headers": "Content-Type",
+		},
 			Body:       `{"error": "Error fetching earthquake statistics"}`,
 		}, nil
 	}
@@ -165,8 +210,13 @@ func HandleStats(dbConn *pgx.Conn) (events.APIGatewayProxyResponse, error) {
 	body, _ := json.Marshal(stats)
 	return events.APIGatewayProxyResponse{
 		StatusCode: 200,
-		Headers:    map[string]string{"Content-Type": "application/json"},
-		Body:       string(body),
+		Headers: map[string]string{
+			"Content-Type":                "application/json",
+			"Access-Control-Allow-Origin": "*",
+			"Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+			"Access-Control-Allow-Headers": "Content-Type",
+		},
+		Body: string(body),
 	}, nil
 }
 
@@ -180,7 +230,12 @@ func HandleLargestToday(dbConn *pgx.Conn) (events.APIGatewayProxyResponse, error
 		body, _ := json.Marshal(response)
 		return events.APIGatewayProxyResponse{
 			StatusCode: 200,
-			Headers:    map[string]string{"Content-Type": "application/json"},
+			Headers: map[string]string{
+			"Content-Type":                "application/json",
+			"Access-Control-Allow-Origin": "*",
+			"Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+			"Access-Control-Allow-Headers": "Content-Type",
+		},
 			Body:       string(body),
 		}, nil
 	}
@@ -192,8 +247,13 @@ func HandleLargestToday(dbConn *pgx.Conn) (events.APIGatewayProxyResponse, error
 	body, _ := json.Marshal(response)
 	return events.APIGatewayProxyResponse{
 		StatusCode: 200,
-		Headers:    map[string]string{"Content-Type": "application/json"},
-		Body:       string(body),
+		Headers: map[string]string{
+			"Content-Type":                "application/json",
+			"Access-Control-Allow-Origin": "*",
+			"Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+			"Access-Control-Allow-Headers": "Content-Type",
+		},
+		Body: string(body),
 	}, nil
 }
 
@@ -207,7 +267,12 @@ func HandleLargestWeek(dbConn *pgx.Conn) (events.APIGatewayProxyResponse, error)
 		body, _ := json.Marshal(response)
 		return events.APIGatewayProxyResponse{
 			StatusCode: 200,
-			Headers:    map[string]string{"Content-Type": "application/json"},
+			Headers: map[string]string{
+			"Content-Type":                "application/json",
+			"Access-Control-Allow-Origin": "*",
+			"Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+			"Access-Control-Allow-Headers": "Content-Type",
+		},
 			Body:       string(body),
 		}, nil
 	}
@@ -219,8 +284,13 @@ func HandleLargestWeek(dbConn *pgx.Conn) (events.APIGatewayProxyResponse, error)
 	body, _ := json.Marshal(response)
 	return events.APIGatewayProxyResponse{
 		StatusCode: 200,
-		Headers:    map[string]string{"Content-Type": "application/json"},
-		Body:       string(body),
+		Headers: map[string]string{
+			"Content-Type":                "application/json",
+			"Access-Control-Allow-Origin": "*",
+			"Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+			"Access-Control-Allow-Headers": "Content-Type",
+		},
+		Body: string(body),
 	}, nil
 }
 
@@ -231,7 +301,12 @@ func HandleSync(dbConn *pgx.Conn) (events.APIGatewayProxyResponse, error) {
 		log.Printf("Error syncing earthquake data: %v", err)
 		return events.APIGatewayProxyResponse{
 			StatusCode: 500,
-			Headers:    map[string]string{"Content-Type": "application/json"},
+			Headers: map[string]string{
+			"Content-Type":                "application/json",
+			"Access-Control-Allow-Origin": "*",
+			"Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+			"Access-Control-Allow-Headers": "Content-Type",
+		},
 			Body:       `{"error": "Error syncing earthquake data"}`,
 		}, nil
 	}
@@ -244,8 +319,13 @@ func HandleSync(dbConn *pgx.Conn) (events.APIGatewayProxyResponse, error) {
 	body, _ := json.Marshal(response)
 	return events.APIGatewayProxyResponse{
 		StatusCode: 200,
-		Headers:    map[string]string{"Content-Type": "application/json"},
-		Body:       string(body),
+		Headers: map[string]string{
+			"Content-Type":                "application/json",
+			"Access-Control-Allow-Origin": "*",
+			"Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+			"Access-Control-Allow-Headers": "Content-Type",
+		},
+		Body: string(body),
 	}, nil
 }
 
@@ -257,7 +337,12 @@ func HandleEarthquakeById(dbConn *pgx.Conn, request events.APIGatewayProxyReques
 	if id == "" || id == path {
 		return events.APIGatewayProxyResponse{
 			StatusCode: 400,
-			Headers:    map[string]string{"Content-Type": "application/json"},
+			Headers: map[string]string{
+			"Content-Type":                "application/json",
+			"Access-Control-Allow-Origin": "*",
+			"Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+			"Access-Control-Allow-Headers": "Content-Type",
+		},
 			Body:       `{"error": "Earthquake ID required"}`,
 		}, nil
 	}
@@ -266,7 +351,12 @@ func HandleEarthquakeById(dbConn *pgx.Conn, request events.APIGatewayProxyReques
 	if err != nil {
 		return events.APIGatewayProxyResponse{
 			StatusCode: 404,
-			Headers:    map[string]string{"Content-Type": "application/json"},
+			Headers: map[string]string{
+			"Content-Type":                "application/json",
+			"Access-Control-Allow-Origin": "*",
+			"Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+			"Access-Control-Allow-Headers": "Content-Type",
+		},
 			Body:       `{"error": "Earthquake not found"}`,
 		}, nil
 	}
@@ -274,7 +364,12 @@ func HandleEarthquakeById(dbConn *pgx.Conn, request events.APIGatewayProxyReques
 	body, _ := json.Marshal(earthquake)
 	return events.APIGatewayProxyResponse{
 		StatusCode: 200,
-		Headers:    map[string]string{"Content-Type": "application/json"},
-		Body:       string(body),
+		Headers: map[string]string{
+			"Content-Type":                "application/json",
+			"Access-Control-Allow-Origin": "*",
+			"Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+			"Access-Control-Allow-Headers": "Content-Type",
+		},
+		Body: string(body),
 	}, nil
 }
