@@ -22,7 +22,16 @@ func Connect() (*pgx.Conn, error) {
 		return nil, fmt.Errorf("DATABASE_URL environment variable not set")
 	}
 
-	conn, err := pgx.Connect(context.Background(), connStr)
+	// Parse and modify connection string to force IPv4
+	config, err := pgx.ParseConfig(connStr)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse connection string: %w", err)
+	}
+	
+	// Force TCP4 to avoid IPv6 issues on AWS Lambda  
+	config.PreferSimpleProtocol = true
+
+	conn, err := pgx.ConnectConfig(context.Background(), config)
 	if err != nil {
 		return nil, fmt.Errorf("unable to connect to database: %w", err)
 	}
