@@ -2,67 +2,72 @@ package main
 
 import (
 	"context"
-	"net/http"
-
-	"fmt"
 	"log"
+	"strings"
 
 	"github.com/Ward-R/Jishin-API/api"
 	"github.com/Ward-R/Jishin-API/db"
 	"github.com/Ward-R/Jishin-API/service"
+	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/jackc/pgx/v4"
-	"github.com/joho/godotenv"
 )
 
-// dbConnect loads environment variables and connects to the database.
-func dbConnect() (*pgx.Conn, error) {
-	err := godotenv.Load()
+// Global db connection for lambda invocations
+var dbConn *pgx.Conn
+
+func init() {
+	// Initialize database connection once
+	var err error
+	dbConn, err = db.Connect()
 	if err != nil {
-		return nil, fmt.Errorf("error loading .env file: %w", err)
+		log.Fatalf("Failed to connect to database: %v", err)
 	}
-
-	conn, err := db.Connect()
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to database: %w", err)
-	}
-
-	return conn, nil
-}
-
-func main() {
-	log.Println("Starting Jishin API...")
-
-	// Connect to postgres database
-	conn, err := dbConnect()
-	if err != nil {
-		log.Fatalf("Application startup failed: %v", err)
-	}
-	defer conn.Close(context.Background())
-	fmt.Println("Successfully connected to the database!")
-
-	// Forced data sync
-	log.Println("Syncing earthquake data from JMA")
-	recordsAdded, err := service.SyncEarthquakes(conn)
+	
+	// Sync earthquake data on startup
+	log.Println("Syncing earthquake data from JMA on startup")
+	recordsAdded, err := service.SyncEarthquakes(dbConn)
 	if err != nil {
 		log.Printf("Error syncing earthquake data: %v", err)
 	} else {
-		log.Printf("Sync complete: added %d new earthquake records", recordsAdded)
+		log.Printf("Startup sync complete: added %d new earthquake records", recordsAdded)
+	}
+}
+
+func HandleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	// Route based on path and method
+	path := request.Path
+	method := request.HTTPMethod
+
+	switch {
+	// Simple routes
+	case path == "/" && method == "GET":
+		return api.HandleRoot(dbConn)
+	case path == "/health" && method == "GET":
+		return api.HandleHealth(dbConn)
+	case path == "/earthquakes/stats" && method == "GET":
+		return api.HandleStats(dbConn)
+	case path == "/earthquakes/recent" && method == "GET":
+		return api.HandleRecent(dbConn)
+	case path == "/earthquakes/largest/today" && method == "GET":
+		return api.HandleLargestToday(dbConn)
+	case path == "/earthquakes/largest/week" && method == "GET":
+		return api.HandleLargestWeek(dbConn)
+	// Complex routes
+	case path == "/earthquakes" && method == "GET":
+		return api.HandleEarthquakes(dbConn, request) // Needs ?Limit=X&magnitude=Y
+	case strings.HasPrefix(path, "/earthquake/") && method == "GET":
+		return api.HandleEarthquakeById(dbConn, request) // Needs ID from path
+	case path == "/sync" && method == "POST":
+		return api.HandleSync(dbConn)
 	}
 
-	// Routes
-	http.HandleFunc("/", api.RootHandler)
-	http.HandleFunc("/health", api.HealthHandler(conn))
-	http.HandleFunc("/earthquakes", api.GetEarthquakesHandler(conn))
-	http.HandleFunc("/earthquake/", api.GetEarthquakeByIdHandler(conn))
-	http.HandleFunc("/earthquakes/largest/today", api.GetLargestEarthquakeTodayHandler(conn))
-	http.HandleFunc("/earthquakes/largest/week", api.GetLargestEarthquakeThisWeekHandler(conn))
-	http.HandleFunc("/earthquakes/recent", api.GetRecentEarthquakesHandler(conn))
-	http.HandleFunc("/earthquakes/stats", api.GetEarthquakeStatsHandler(conn))
-	http.HandleFunc("/sync", api.SyncEarthquakesHandler(conn))
+	return events.APIGatewayProxyResponse{
+		StatusCode: 404,
+		Body:       `{"error": "Not found"}`,
+	}, nil
+}
 
-	// Start localhost
-	log.Println("Server starting on :8080")
-	if err := http.ListenAndServe(":8080", nil); err != nil {
-		log.Fatal(err)
-	}
+func main() {
+	lambda.Start(HandleRequest)
 }
