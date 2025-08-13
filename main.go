@@ -54,6 +54,8 @@ func main() {
 	http.HandleFunc("/health", api.HealthHandler(conn))
 	http.HandleFunc("/earthquakes", api.GetEarthquakesHandler(conn))
 	http.HandleFunc("/earthquake/", api.GetEarthquakeByIdHandler(conn))
+	http.HandleFunc("/earthquakes/largest/today", api.GetLargestEarthquakeTodayHandler(conn))
+	http.HandleFunc("/earthquakes/largest/week", api.GetLargestEarthquakeThisWeekHandler(conn))
 	http.HandleFunc("/earthquakes/recent", api.GetRecentEarthquakesHandler(conn))
 	http.HandleFunc("/earthquakes/stats", api.GetEarthquakeStatsHandler(conn))
 	http.HandleFunc("/sync", api.SyncEarthquakesHandler(conn))

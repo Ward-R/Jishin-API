@@ -103,18 +103,20 @@ func RootHandler(w http.ResponseWriter, r *http.Request) {
 		"version":     "1.0.0",
 		"description": "Real-time earthquake data from Japan Meterological Agency (JMA)",
 		"endpoints": map[string]string{
-			"GET /":                            "API information",
-			"GET /health":                      "Health check",
-			"GET /earthquakes":                 "Default 50 earthquakes",
-			"GET /earthquakes/recent":          "Gets all earthquakes in last 24 hours",
-			"GET /earthquakes/stats":           "Summary statistics and data overview",
-			"GET /earthquakes?limit=10":        "10 earthquakes",
-			"GET /earthquakes?limit=-1":        "ALL earthquakes",
-			"GET /earthquakes?magnitude=5.0":   "Earthquakes 5.0+ magnitude",
-			"GET /earthquakes?date=2025-08-12": "Earthquakes from specific date (YYYY-MM-DD)",
+			"GET /":                                                  "API information",
+			"GET /health":                                            "Health check",
+			"GET /earthquakes":                                       "Default 50 earthquakes",
+			"GET /earthquakes/largest/today":                         "Strongest earthquake today",
+			"GET /earthquakes/largest/week":                          "Strongest earthquake this week",
+			"GET /earthquakes/recent":                                "Gets all earthquakes in last 24 hours",
+			"GET /earthquakes/stats":                                 "Summary statistics and data overview",
+			"GET /earthquakes?limit=10":                              "10 earthquakes",
+			"GET /earthquakes?limit=-1":                              "ALL earthquakes",
+			"GET /earthquakes?magnitude=5.0":                         "Earthquakes 5.0+ magnitude",
+			"GET /earthquakes?date=2025-08-12":                       "Earthquakes from specific date (YYYY-MM-DD)",
 			"GET /earthquakes?limit=5&magnitude=4.0&date=2025-08-12": "Combined filters example",
-			"GET /earthquake/{id}": "Get specific earthquake by report ID",
-			"POST /sync":           "Manually sync with JMA data",
+			"GET /earthquake/{id}":                                   "Get specific earthquake by report ID",
+			"POST /sync":                                             "Manually sync with JMA data",
 		},
 		"data_source": "Japan Meterological Agency (JMA)",
 		"github":      "https://github.com/Ward-R/Jishin-API",
@@ -190,5 +192,49 @@ func GetEarthquakeStatsHandler(conn *pgx.Conn) http.HandlerFunc {
 
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(stats)
+	}
+}
+
+func GetLargestEarthquakeTodayHandler(conn *pgx.Conn) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		earthquake, err := db.GetLargestEarthquakeToday(conn)
+		if err != nil {
+			w.Header().Set("Content-Type", "application/json")
+			response := map[string]interface{}{
+				"message": "No earthquakes found today",
+				"period":  "today",
+			}
+			json.NewEncoder(w).Encode(response)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		response := map[string]interface{}{
+			"period":             "today",
+			"largest_earthquake": earthquake,
+		}
+		json.NewEncoder(w).Encode(response)
+	}
+}
+
+func GetLargestEarthquakeThisWeekHandler(conn *pgx.Conn) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		earthquake, err := db.GetLargestEarthquakeThisWeek(conn)
+		if err != nil {
+			w.Header().Set("Content-Type", "application/json")
+			response := map[string]interface{}{
+				"message": "No earthquakes found this week",
+				"period":  "this week",
+			}
+			json.NewEncoder(w).Encode(response)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		response := map[string]interface{}{
+			"period":             "this week",
+			"largest_earthquake": earthquake,
+		}
+		json.NewEncoder(w).Encode(response)
 	}
 }

@@ -252,3 +252,58 @@ func GetEarthquakeStats(conn *pgx.Conn) (map[string]interface{}, error) {
 
 	return stats, nil
 }
+
+// GetLargestEarthquakeToday returns the strongest earthquake from today
+func GetLargestEarthquakeToday(conn *pgx.Conn) (*types.Earthquake, error) {
+	query := `
+          SELECT report_id, origin_time, arrival_time, magnitude, depth_km,
+                 latitude, longitude, max_intensity, jp_location, en_location,
+                 jp_comment, en_comment, tsunami_risk
+          FROM earthquakes
+          WHERE DATE(origin_time) = CURRENT_DATE
+          ORDER BY magnitude DESC
+          LIMIT 1`
+
+	row := conn.QueryRow(context.Background(), query)
+
+	var eq types.Earthquake
+	err := row.Scan(
+		&eq.ReportId, &eq.OriginTime, &eq.ArrivalTime, &eq.Magnitude,
+		&eq.DepthKm, &eq.Latitude, &eq.Longitude, &eq.MaxIntensity,
+		&eq.JpLocation, &eq.EnLocation, &eq.JpComment, &eq.EnComment,
+		&eq.TsunamiRisk,
+	)
+
+	if err != nil {
+		return nil, fmt.Errorf("no earthquakes found today: %w", err)
+	}
+
+	return &eq, nil
+}
+
+// GetLargestEarthquakeThisWeek returns the strongest earthquake from this week
+func GetLargestEarthquakeThisWeek(conn *pgx.Conn) (*types.Earthquake, error) {
+	query := `
+				SELECT report_id, origin_time, arrival_time, magnitude, depth_km,
+								latitude, longitude, max_intensity, jp_location, en_location,
+								jp_comment, en_comment, tsunami_risk
+				FROM earthquakes
+				WHERE origin_time >= date_trunc('week', CURRENT_DATE)
+				ORDER BY magnitude DESC
+				LIMIT 1`
+
+	row := conn.QueryRow(context.Background(), query)
+
+	var eq types.Earthquake
+	err := row.Scan(
+		&eq.ReportId, &eq.OriginTime, &eq.ArrivalTime, &eq.Magnitude,
+		&eq.DepthKm, &eq.Latitude, &eq.Longitude, &eq.MaxIntensity,
+		&eq.JpLocation, &eq.EnLocation, &eq.JpComment, &eq.EnComment,
+		&eq.TsunamiRisk,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("no earthquakes found this week: %w", err)
+	}
+
+	return &eq, nil
+}
